@@ -11,3 +11,12 @@ pub inline fn hlt() noreturn {
         asm volatile ("hlt");
     }
 }
+
+pub const Descriptor = packed struct {
+    len: u16,
+    ptr: u64,
+
+    pub inline fn new(ptr: *anyopaque, len: u16) @This() {
+        return .{ .ptr = @intFromPtr(ptr), .len = len };
+    }
+};

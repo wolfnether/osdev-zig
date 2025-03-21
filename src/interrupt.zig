@@ -2,23 +2,6 @@ const std = @import("std");
 
 var interrupt_descriptor_table align(4096) = [1]InterruptDescriptor{.{}} ** 255;
 
-var global_descriptor_table align(4096) = [5]GlobalDescriptor{
-    GlobalDescriptor.new(0, 0, 0, 0),
-    GlobalDescriptor.new(0, 0xFFFFF, 0x9A, 0xA),
-    GlobalDescriptor.new(0, 0xFFFFF, 0x92, 0xC),
-    GlobalDescriptor.new(0, 0xFFFFF, 0xFA, 0xA),
-    GlobalDescriptor.new(0, 0xFFFFF, 0xF2, 0xC),
-};
-
-const Descriptor = packed struct {
-    len: u16,
-    ptr: u64,
-
-    inline fn new(ptr: *anyopaque, len: u16) @This() {
-        return .{ .ptr = @intFromPtr(ptr), .len = len };
-    }
-};
-
 const CpuStatus = struct {
     r15: u64,
     r14: u64,
@@ -105,26 +88,6 @@ const CpuStatus = struct {
     }
 };
 
-const GlobalDescriptor = packed struct {
-    limit_1: u16,
-    base_1: u24,
-    access: u8,
-    limit_2: u4,
-    flags: u4,
-    base_2: u8,
-
-    inline fn new(base: u32, limit: u20, access: u8, flags: u4) @This() {
-        return .{
-            .base_1 = @intCast(base),
-            .base_2 = @intCast(base >> 24),
-            .limit_1 = @intCast(limit & 0xFFFF),
-            .limit_2 = @intCast(limit >> 16),
-            .access = access,
-            .flags = flags,
-        };
-    }
-};
-
 const InterruptDescriptor = packed struct {
     offset_1: u16 = 0,
     segment: u16 = 0,
@@ -144,8 +107,7 @@ const InterruptDescriptor = packed struct {
 };
 
 pub fn init() void {
-    const idtd = Descriptor.new(&interrupt_descriptor_table, interrupt_descriptor_table.len);
-    const gdtd = Descriptor.new(&global_descriptor_table, interrupt_descriptor_table.len);
+    const idt = @import("util.zig").Descriptor.new(&interrupt_descriptor_table, @sizeOf(InterruptDescriptor) * interrupt_descriptor_table.len);
 
     //@setEvalBranchQuota(1000);
     inline for (0..32) |i| {
@@ -157,26 +119,11 @@ pub fn init() void {
     }
 
     asm volatile (
-        \\lgdt %[gdtd]
         \\lidt %[idtd]
-        \\
-        \\pushw $0x8
-        \\leaq .reload_CS(%rip), %rax
-        \\pushq %rax
-        \\lretq
-        \\
-        \\.reload_CS:
-        \\movw $0x10, %ax
-        \\movw %ax, %ds
-        \\movw %ax, %es
-        \\movw %ax, %fs
-        \\movw %ax, %gs
-        \\movw %ax, %ss
         \\
         \\sti
         :
-        : [gdtd] "*p" (&gdtd),
-          [idtd] "*p" (&idtd),
+        : [idtd] "*p" (&idt),
         : "rax"
     );
 }

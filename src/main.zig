@@ -29,7 +29,6 @@ const std = @import("std");
 const console = @import("console.zig");
 const frame_manager = @import("frame_manager.zig");
 const allocator = @import("allocator.zig").allocator;
-const interrupion = @import("interrupt.zig");
 
 extern var bootboot: @import("bootboot.zig").BOOTBOOT; // see bootboot.zig
 
@@ -71,7 +70,8 @@ fn main() !void {
     console.init();
     console.format("HELLO WORLD FROM KERNEL\n", .{});
 
-    interrupion.init();
+    @import("gdt.zig").init();
+    @import("interrupt.zig").init();
 
     for (0..bootboot.num_mmap_entrie()) |i| {
         const entry = &bootboot.get_mmap_slice()[i];
@@ -84,6 +84,8 @@ fn main() !void {
             frame_manager.add_node(frame);
         }
     }
+
+    asm volatile ("ud2");
 }
 
 pub const panic = std.debug.FullPanic(kernel_panic);
