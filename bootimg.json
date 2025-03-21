@@ -1,0 +1,10 @@
+{
+    "config" : "boot/sys/config",
+    "initrd" : {
+        "type":"echfs",
+        "directory" : "boot"
+    },
+    "partitions": [
+        { "type": "fat32", "size": 16 }
+    ]
+}

@@ -1,0 +1,4 @@
+.zig-cache
+boot
+dis.asm
+os.img
