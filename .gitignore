@@ -1,4 +1,6 @@
 .zig-cache
+zig-out
 boot
+!boot/sys/config
 dis.asm
 os.img
