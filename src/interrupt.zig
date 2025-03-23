@@ -2,7 +2,7 @@ const std = @import("std");
 
 var interrupt_descriptor_table align(4096) = [1]InterruptDescriptor{.{}} ** 255;
 
-const CpuStatus = struct {
+pub const CpuStatus = struct {
     r15: u64,
     r14: u64,
     r13: u64,
@@ -51,11 +51,11 @@ const CpuStatus = struct {
             \\  .rdx        = 0x{X:0>16},
             \\  .rbp        = 0x{X:0>16},
             \\  .rdi        = 0x{X:0>16},
+            \\  .rsi        = 0x{X:0>16},
             \\  .r8         = 0x{X:0>16},
             \\  .r9         = 0x{X:0>16},
             \\  .r10        = 0x{X:0>16},
             \\  .r11        = 0x{X:0>16},
-            \\  .rsi        = 0x{X:0>16},
             \\  .r12        = 0x{X:0>16},
             \\  .r13        = 0x{X:0>16},
             \\  .r14        = 0x{X:0>16},
@@ -75,11 +75,11 @@ const CpuStatus = struct {
             self.rdx,
             self.rbp,
             self.rdi,
+            self.rsi,
             self.r8,
             self.r9,
             self.r10,
             self.r11,
-            self.rsi,
             self.r12,
             self.r13,
             self.r14,
@@ -101,8 +101,8 @@ const InterruptDescriptor = packed struct {
     _3: u32 = 0,
 
     fn set_vector(self: *@This(), vector: usize) void {
-        self.offset_1 = @intCast(vector);
-        self.offset_2 = @intCast(vector >> 16);
+        self.offset_1 = @truncate(vector);
+        self.offset_2 = @truncate(vector >> 16);
     }
 };
 
@@ -201,6 +201,7 @@ fn interrupt_stub() callconv(.naked) noreturn {
 }
 
 fn interrupt_disaptch(cpu_status: *CpuStatus) void {
-    @import("console.zig").format("{}", .{cpu_status});
-    @import("util.zig").hlt();
+    @import("console.zig").format("{}\n", .{cpu_status});
+
+    @import("unwinding.zig").unwinding(cpu_status);
 }

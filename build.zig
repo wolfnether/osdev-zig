@@ -42,7 +42,7 @@ pub fn build(b: *std.Build) !void {
     target_query.cpu_features_sub.addFeature(@intFromEnum(features.sse2));
 
     const kernel_module = b.createModule(std.Build.Module.CreateOptions{
-        .strip = true,
+        .strip = false,
         .optimize = b.standardOptimizeOption(.{}),
         .target = b.resolveTargetQuery(target_query),
         .root_source_file = b.path("src/main.zig"),
@@ -59,6 +59,7 @@ pub fn build(b: *std.Build) !void {
     const kernel = b.addExecutable(option);
     kernel.setLinkerScript(b.path("src/linker.ld"));
 
+    kernel.addIncludePath(b.path("custom/uACPI/include"));
     kernel.addIncludePath(b.path("lib/uACPI/include"));
     kernel.addIncludePath(b.path("limine"));
 

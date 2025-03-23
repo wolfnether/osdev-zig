@@ -7,3 +7,5 @@ pub export var base_revision: limine.BaseRevision linksection(".limine_requests"
 pub export var framebuffer_request linksection(".limine_requests") = limine.FramebufferRequest{};
 pub export var memory_map_request linksection(".limine_requests") = limine.MemoryMapRequest{};
 pub export var hhdm_request linksection(".limine_requests") = limine.HhdmRequest{};
+pub export var rspd_request linksection(".limine_requests") = limine.RsdpRequest{};
+pub export var kernel linksection(".limine_requests") = limine.ExecutableFileRequest{};

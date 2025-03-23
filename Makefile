@@ -43,10 +43,11 @@ boot.iso:zig-out/bin/mykernel.x86_64.elf
         -efi-boot-part --efi-boot-image --protective-msdos-label \
         iso_root -o boot.iso
 
+SRC = $(wildcard src/*) $(wildcard src/*/*) $(wildcard src/*/*/*) $(wildcard src/*/*/*/*)
 
-zig-out/bin/mykernel.x86_64.elf: src/** build.zig
-	zig build -Dtarget=x86_64-freestanding-none -Doptimize=ReleaseFast
-	objdump -d ./zig-out/bin/mykernel.x86_64.elf -Mintel > dis.asm
+zig-out/bin/mykernel.x86_64.elf: $(SRC) build.zig Makefile
+	zig build -Dtarget=x86_64-freestanding-none -Doptimize=ReleaseFast -freference-trace=10 
+	objdump -d ./zig-out/bin/mykernel.x86_64.elf -Mintel -l > dis.asm
 
 clean:
 	rm -rf *.elf zig-cache || true

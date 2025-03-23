@@ -21,3 +21,7 @@ pub const Descriptor = packed struct {
         return .{ .ptr = ptr, .len = len };
     }
 };
+
+pub inline fn create_virtual_addr(a: u64, b: u64, c: u64, d: u64) u64 {
+    return ((((a * 512 + b) * 512) + c) * 512 + d) << 12;
+}

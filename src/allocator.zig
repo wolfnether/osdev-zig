@@ -1,7 +1,9 @@
 const std = @import("std");
 const page_manager = @import("page_manager.zig");
 
-const page_allocator = std.mem.Allocator{ .ptr = @constCast(&@This()), .vtable = &.{
+var i: u64 = 0;
+
+pub const page_allocator = std.mem.Allocator{ .ptr = @constCast(&@This()), .vtable = &.{
     .alloc = page_alloc,
     .resize = page_resize,
     .remap = page_remap,
@@ -9,8 +11,12 @@ const page_allocator = std.mem.Allocator{ .ptr = @constCast(&@This()), .vtable =
 } };
 
 fn page_alloc(_: *anyopaque, n: usize, _: std.mem.Alignment, _: usize) ?[*]u8 {
-    @import("console.zig").format("new page request {} B\n", .{n});
-    return page_manager.map(n / 4096 + 1);
+    const n_page = std.mem.alignForward(usize, n, 4096) / 4096;
+
+    const first = @import("util.zig").create_virtual_addr(510, 0, 0, i);
+
+    i += n_page;
+    return page_manager.map(first, n_page);
 }
 fn page_resize(_: *anyopaque, memory: []u8, _: std.mem.Alignment, new_len: usize, _: usize) bool {
     return realloc(memory, new_len, false) != null;
@@ -26,24 +32,24 @@ fn page_remap(
 }
 
 fn page_free(_: *anyopaque, memory: []u8, _: std.mem.Alignment, _: usize) void {
-    page_manager.unmap(@alignCast(memory));
+    page_manager.unmap(@alignCast(memory)) catch {};
 }
 
-fn realloc(uncasted_memory: []u8, new_len: usize, may_move: bool) ?[*]u8 {
-    _ = may_move;
+fn realloc(uncasted_memory: []u8, new_len: usize, _: bool) ?[*]u8 {
     const memory: []align(page_manager.page_size) u8 = @alignCast(uncasted_memory);
     const new_size_aligned = std.mem.alignForward(usize, new_len, page_manager.page_size);
+    const page_aligned_len = std.mem.alignForward(usize, memory.len, page_manager.page_size);
 
-    if (new_size_aligned == new_size_aligned)
+    if (page_aligned_len == new_size_aligned)
         return memory.ptr;
-    if (new_size_aligned < new_size_aligned) {
+    if (new_size_aligned < page_aligned_len) {
         const ptr = memory.ptr + new_size_aligned;
-        page_manager.unmap(@alignCast(ptr[0 .. page_manager.page_size - new_size_aligned]));
+        page_manager.unmap(@alignCast(ptr[0 .. page_manager.page_size - new_size_aligned])) catch {};
         return memory.ptr;
     }
-    @panic("todo2");
-    //const mem = try page_manager.remap(memory.ptr, memory.len, new_len, may_move) orelse null;
-    //    return mem.ptr;
+    _ = page_alloc(@ptrFromInt(1), new_size_aligned - page_aligned_len, .@"1", 0).?;
+
+    return memory.ptr;
 }
 
 var arena = std.heap.ArenaAllocator.init(page_allocator);

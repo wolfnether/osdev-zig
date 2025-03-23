@@ -26,14 +26,14 @@ SECTIONS
         *(.text .text.*)
     } :text
 
-    . = ALIGN(CONSTANT(MAXPAGESIZE));
+	. = ALIGN(CONSTANT(MAXPAGESIZE));
 
     .rodata : {
         *(.rodata .rodata.*)
     } :rodata
 
-    . = ALIGN(CONSTANT(MAXPAGESIZE));
-
+	. = ALIGN(CONSTANT(MAXPAGESIZE));
+	
     .data : {
         *(.data .data.*)
     } :data
@@ -43,8 +43,7 @@ SECTIONS
         *(COMMON)
     } :data
 
-    /DISCARD/ : {
-        *(.eh_frame*)
-        *(.note .note.*)
+    .debug_frame : {
+        KEEP(*(.debug_frame))
     }
 }

@@ -31,9 +31,8 @@ fn pan(line_per_screen: usize, font_height: usize) void {
         const char_line = font_height * framebuffer.pitch;
         std.mem.copyForwards(u8, slice[0 .. screen_size - char_line], slice[char_line..screen_size]);
         ctx.y -= 1;
-        for (screen_size - char_line..screen_size) |i| {
-            slice[i] = 0;
-        }
+
+        @memset(slice[screen_size - char_line .. screen_size], 0);
     }
 }
 
@@ -89,7 +88,7 @@ fn cb(_: void, string: []const u8) error{}!usize {
     return string.len;
 }
 
-pub inline fn format(comptime fmt: []const u8, args: anytype) void {
+pub fn format(comptime fmt: []const u8, args: anytype) void {
     try std.fmt.format(writer, fmt, args);
 }
 
