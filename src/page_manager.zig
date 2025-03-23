@@ -9,6 +9,7 @@ pub fn unmap(memory: []align(page_size) const u8) void {
 
 pub fn map(n: usize) ?[*]u8 {
     const dl4 = get_page_table_level4();
+    @import("console.zig").format("{*}\n", .{dl4});
     var r = find_unused_range(n).?;
 
     for (0..n, r..) |_, range| {
@@ -18,6 +19,7 @@ pub fn map(n: usize) ?[*]u8 {
         const l = range & 0b111111111;
 
         var e4 = &dl4[i];
+        @import("console.zig").format("{*}\n", .{e4});
         if (!e4.present) {
             e4.set_addr(frame_manager.alloc_frame().?);
             e4.present = true;
@@ -124,8 +126,7 @@ pub const page_entry = packed struct {
     write_through_caching: bool,
     disable_cache: bool,
     accessed: bool,
-    global: bool = false,
-    //or huge
+    huge: bool = false,
     pat: bool = false,
     dirty: bool = false,
     avail1: u3,
@@ -134,7 +135,7 @@ pub const page_entry = packed struct {
     no_exec: bool,
 
     pub inline fn get_page_directory(self: *const @This()) *[512]page_entry {
-        return @ptrFromInt(self.get_addr());
+        return @ptrFromInt(self.get_addr() + @import("hhmd.zig").get_offset());
     }
 
     pub inline fn get_addr(self: *const @This()) usize {
@@ -147,7 +148,10 @@ pub const page_entry = packed struct {
 };
 
 pub inline fn get_page_table_level4() *[512]page_entry {
-    return asm volatile ("mov %%cr3,%[addr]"
-        : [addr] "=r" (-> *[512]page_entry),
+    const ptr = asm volatile ("mov %cr3,%[addr]"
+        : [addr] "=r" (-> u64),
     );
+
+    return @ptrFromInt(ptr + @import("hhmd.zig").get_offset());
+    //return @ptrFromInt(ptr);
 }

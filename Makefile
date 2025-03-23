@@ -30,11 +30,19 @@
 
 all: zig-out/bin/mykernel.x86_64.elf
 
-run.x86_64: zig-out/bin/mykernel.x86_64.elf
-	mkdir -p boot/sys
-	cp zig-out/bin/mykernel.x86_64.elf boot/sys/kernel
-	./mkbootimg bootimg.json os.img
-	qemu-system-x86_64.exe -no-reboot -hda .\os.img  -serial stdio -m 1G -smp 4 -d int
+run.x86_64: boot.iso
+	qemu-system-x86_64.exe -no-reboot -cdrom .\boot.iso  -serial stdio -m 1G -smp 4 -d int
+
+boot.iso:zig-out/bin/mykernel.x86_64.elf
+	cp zig-out/bin/mykernel.x86_64.elf iso_root/boot
+	cp lib/limine/limine-bios.sys lib/limine/limine-bios-cd.bin lib/limine/limine-uefi-cd.bin iso_root/boot/limine/
+	cp lib/limine/BOOTX64.EFI lib/limine/BOOTIA32.EFI iso_root/EFI/BOOT/
+	xorriso -as mkisofs -R -r -J -b boot/limine/limine-bios-cd.bin \
+        -no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus \
+        -apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin \
+        -efi-boot-part --efi-boot-image --protective-msdos-label \
+        iso_root -o boot.iso
+
 
 zig-out/bin/mykernel.x86_64.elf: src/** build.zig
 	zig build -Dtarget=x86_64-freestanding-none -Doptimize=ReleaseFast

@@ -19,10 +19,10 @@ const SegmentDescriptor = packed struct {
 
     inline fn new(base: u32, limit: u20, access: SegmentAccess, flags: u4) @This() {
         return .{
-            .base_1 = @intCast(base),
-            .base_2 = @intCast(base >> 24),
-            .limit_1 = @intCast(limit & 0xFFFF),
-            .limit_2 = @intCast(limit >> 16),
+            .base_1 = @truncate(base),
+            .base_2 = @truncate(base >> 24),
+            .limit_1 = @truncate(limit),
+            .limit_2 = @truncate(limit >> 16),
             .access = access,
             .flags = flags,
         };
@@ -81,8 +81,11 @@ const SegmentAccess = packed struct {
 
 var global_descriptor_table align(4096) = GlobalDescriptorTable{};
 
-pub fn init() void {
-    const gdtd = @import("util.zig").Descriptor.new(&global_descriptor_table, @sizeOf(GlobalDescriptorTable));
+pub inline fn init() void {
+    const gdtd = @import("util.zig").Descriptor.new(
+        @intFromPtr(&global_descriptor_table),
+        @sizeOf(GlobalDescriptorTable),
+    );
 
     asm volatile (
         \\lgdt %[gdtd]

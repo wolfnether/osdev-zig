@@ -2,9 +2,22 @@ const allocator = @import("allocator.zig").allocator;
 
 pub const FramesNode = struct { ptr: usize, size: usize, next: ?*FramesNode = null };
 
-var frame_list = FramesNode{ .ptr = 0, .size = 0, .next = null };
+var frame_list: FramesNode = .{ .ptr = 0, .size = 0, .next = null };
+
+pub fn free() usize {
+    var node: ?*FramesNode = &frame_list;
+    var res: usize = 0;
+
+    while (node) |_node| {
+        res += _node.size;
+        node = _node.next;
+    }
+
+    return res;
+}
 
 pub fn alloc_frame() ?usize {
+    @import("console.zig").format("new frame requested\n", .{});
     var node = &frame_list;
     var prev: ?*FramesNode = null;
     while (node.next != null) {
@@ -12,14 +25,6 @@ pub fn alloc_frame() ?usize {
             const ptr = node.ptr;
             node.ptr += 4096;
             node.size -= 1;
-            if (node.size == 0) {
-                if (prev) |prev_node| {
-                    prev_node.next = node.next;
-                } else if (node.next) |next_node| {
-                    frame_list = next_node.*;
-                }
-                allocator.destroy(node);
-            }
             return ptr;
         }
         prev = node;
@@ -31,12 +36,10 @@ pub fn alloc_frame() ?usize {
 pub fn add_node(frame_region: *FramesNode) void {
     var node = &frame_list;
     while (node.next != null) {
-        if (frame_region.ptr <= node.ptr) {
-            if (frame_list.ptr + 4096 == node.ptr) {
-                node.ptr -= 4096;
-                node.size += 1;
-                return;
-            }
+        if (frame_list.ptr + 4096 == node.ptr) {
+            node.ptr -= 4096;
+            node.size += 1;
+            return;
         }
         node = node.next.?;
     }

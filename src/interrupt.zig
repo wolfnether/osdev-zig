@@ -106,8 +106,11 @@ const InterruptDescriptor = packed struct {
     }
 };
 
-pub fn init() void {
-    const idt = @import("util.zig").Descriptor.new(&interrupt_descriptor_table, @sizeOf(InterruptDescriptor) * interrupt_descriptor_table.len);
+pub inline fn init() void {
+    const idt = @import("util.zig").Descriptor.new(
+        @intFromPtr(&interrupt_descriptor_table),
+        @sizeOf(InterruptDescriptor) * interrupt_descriptor_table.len,
+    );
 
     //@setEvalBranchQuota(1000);
     inline for (0..32) |i| {

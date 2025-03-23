@@ -1,6 +1,7 @@
 .zig-cache
+iso_root
+!iso_root/boot/limine/limine.conf
+lib
 zig-out
-boot
-!boot/sys/config
+boot.iso
 dis.asm
-os.img

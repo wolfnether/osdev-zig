@@ -9,7 +9,8 @@ const page_allocator = std.mem.Allocator{ .ptr = @constCast(&@This()), .vtable =
 } };
 
 fn page_alloc(_: *anyopaque, n: usize, _: std.mem.Alignment, _: usize) ?[*]u8 {
-    return page_manager.map(n);
+    @import("console.zig").format("new page request {} B\n", .{n});
+    return page_manager.map(n / 4096 + 1);
 }
 fn page_resize(_: *anyopaque, memory: []u8, _: std.mem.Alignment, new_len: usize, _: usize) bool {
     return realloc(memory, new_len, false) != null;
