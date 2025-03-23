@@ -1,0 +1,7 @@
+[submodule "lib/limine"]
+	path = lib/limine
+	url = https://github.com/limine-bootloader/limine.git
+	branch = v9.x-binary
+[submodule "lib/uacpi"]
+	path = lib/uacpi
+	url = https://github.com/uACPI/uACPI.git
